@@ -66,7 +66,7 @@ def main():
     global LOGS
 
     folder_info_obj = FolderInfo(parent_folder)
-    output_folder = folder_info_obj.timestamp
+    output_folder_timestamp = folder_info_obj.timestamp
     for extenstion in FILE_TYPES:
         extenstion = extenstion.lower()
         folder_info_obj.file_count[extenstion] = 0
@@ -91,13 +91,18 @@ def main():
 
             folder_info_obj.add_fileinfo_to_dict(file_hash, full_file_name)
 
-    os.mkdir(f"outputs/{output_folder}")
+    outputs_folder_path = os.path.join(os.getcwd(), "outputs")
 
-    write_to_file(f"outputs/{output_folder}/outputs.json", to_dict(folder_info_obj))
+    if not os.path.exists(outputs_folder_path):
+        os.mkdir(outputs_folder_path)
+
+    os.mkdir(os.path.join(outputs_folder_path, output_folder_timestamp))
+
+    write_to_file(f"outputs/{output_folder_timestamp}/outputs.json", to_dict(folder_info_obj))
 
     LOGS = [*LOGS, "\n\nCheckd Folders", *folder_info_obj.checked_folders]
     
-    write_to_file(f"outputs/{output_folder}/LOGS.txt", "\n".join(LOGS),write_type="wb")
+    write_to_file(f"outputs/{output_folder_timestamp}/LOGS.txt", "\n".join(LOGS),write_type="w")
 
 
 if __name__ == "__main__":
