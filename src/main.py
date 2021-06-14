@@ -8,24 +8,28 @@ from typing import Dict, List
 
 hash_dict:Dict[str, List] = {}
 LOGS = []
+checked_folders = []
 
-FILE_TYPES = ["JPG", "PNG", "GIF", "WEBP", "TIFF", "PSD", "RAW", "BMP", "HEIF", "INDD", "JPEG 2000"]
-"JPG", "PNG", "GIF", "WEBP", "TIFF", "PSD", "RAW", "BMP", "HEIF", "INDD", "JPEG 2000"
+FILE_TYPES = ["JPG", "PNG", "GIF", "WEBP", "TIFF", "PSD", "RAW", "BMP", "HEIF", "INDD", "JPEG 2000", "TXT"]
 
 
-class FileInfo():
-    def __init__(self, file_name:str="", file_hash:str="", file_location:str=None):
-        _, self.file_location = self.get_file_info(file_name)
+
+# class FileInfo():
+#     def __init__(self, file_name:str="", file_hash:str="", file_location:str=None):
+#         _, self.file_location = self.get_file_info(file_name)
     
-    def get_file_info(self, full_file_path):
-        abs_path = os.path.abspath(full_file_path)
-        file_name = os.path.basename(full_file_path)
-        return file_name, os.path.dirname(abs_path)
+#     def get_file_info(self, full_file_path):
+#         abs_path = os.path.abspath(full_file_path)
+#         file_name = os.path.basename(full_file_path)
+#         return file_name, os.path.dirname(abs_path)
         
 class FolderInfo():
     def __init__(self, folder_name:str = ""):
         self.folder_name = folder_name
         self.timestamp = str(datetime.datetime.now()).replace(":", "-")
+        self.file_count = {}
+        self.folder_count = 0
+        self.checked_folders = []
         self.file_info_dict:Dict[str, List[str]] = dict()
     
     
@@ -42,6 +46,7 @@ class FolderInfo():
         for path in pathlist:
             path_in_str = str(path)
             yield path_in_str
+
 
 
 def hash_file(filename) -> str:
@@ -71,26 +76,43 @@ def main():
 
     folder_info_obj = FolderInfo(parent_folder)
     output_folder = folder_info_obj.timestamp
+    for extenstion in FILE_TYPES:
+        extenstion = extenstion.lower()
+        folder_info_obj.file_count[extenstion] = 0
+        print(f"{extenstion=}")
+        for file_name in folder_info_obj.get_files_from_parent_folder(parent_folder, file_extension=extenstion):
+            file_hash = "File Not Readable"
+            folder_info_obj.file_count[extenstion] += 1
+            try:
+                file_hash = hash_file(file_name)
+            except PermissionError:
+                LOGS.append(f"PermissionError for file {file_name}")
+            except Exception as e:
+                LOGS.append(f"{e} for file {file_name}")
 
-    for file_name in folder_info_obj.get_files_from_parent_folder(parent_folder):
-        file_hash = "File Not Readable"
-        try:
-            file_hash = hash_file(file_name)
-        except PermissionError:
-            LOGS.append(f"PermissionError for file {file_name}")
-        except Exception as e:
-            LOGS.append(f"{e} for file {file_name}")
+            full_file_name = os.path.abspath(file_name)
+            folder_name = os.path.dirname(full_file_name)
 
-        full_file_name = os.path.abspath(file_name)
-        folder_info_obj.add_fileinfo_to_dict(file_hash, full_file_name)
+            if folder_name not in folder_info_obj.checked_folders:
+                print(f"Started with {folder_name}")
+                folder_info_obj.folder_count += 1
+                folder_info_obj.checked_folders.append(folder_name)
+
+            folder_info_obj.add_fileinfo_to_dict(file_hash, full_file_name)
 
     os.mkdir(f"outputs/{output_folder}")
 
     write_to_file(f"outputs/{output_folder}/outputs.json", to_dict(folder_info_obj))
 
-    if LOGS:
-        write_to_file(f"outputs/{output_folder}/LOGS.txt", "\n".join(LOGS))
+    LOGS = [*LOGS, "\n\nCheckd Folders", *folder_info_obj.checked_folders]
+    
+    write_to_file(f"outputs/{output_folder}/LOGS.txt", "\n".join(LOGS))
 
 
 if __name__ == "__main__":
+    import time
+    start_time = time.perf_counter()
     main()
+    end_time = time.perf_counter()
+    elapsed_time = end_time - start_time
+    print(f'finished in {elapsed_time:.02f}s')
