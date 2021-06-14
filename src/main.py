@@ -10,18 +10,9 @@ hash_dict:Dict[str, List] = {}
 LOGS = []
 checked_folders = []
 
-FILE_TYPES = ["JPG", "PNG", "GIF", "WEBP", "TIFF", "PSD", "RAW", "BMP", "HEIF", "INDD", "JPEG 2000", "TXT"]
+FILE_TYPES = ["JPG", "PNG", "GIF", "WEBP", "TIFF", "PSD", "RAW", "BMP", "HEIF", "INDD", "JPEG 2000"]
 
 
-
-# class FileInfo():
-#     def __init__(self, file_name:str="", file_hash:str="", file_location:str=None):
-#         _, self.file_location = self.get_file_info(file_name)
-    
-#     def get_file_info(self, full_file_path):
-#         abs_path = os.path.abspath(full_file_path)
-#         file_name = os.path.basename(full_file_path)
-#         return file_name, os.path.dirname(abs_path)
         
 class FolderInfo():
     def __init__(self, folder_name:str = ""):
@@ -60,8 +51,8 @@ def hash_file(filename) -> str:
    return h.hexdigest()
    
 
-def write_to_file(file_name:str, data:str):
-    with open(file_name, "w") as file_stream:
+def write_to_file(file_name:str, data:str, write_type:str="w"):
+    with open(file_name, write_type) as file_stream:
         file_stream.write(data)
     
 
@@ -106,7 +97,7 @@ def main():
 
     LOGS = [*LOGS, "\n\nCheckd Folders", *folder_info_obj.checked_folders]
     
-    write_to_file(f"outputs/{output_folder}/LOGS.txt", "\n".join(LOGS))
+    write_to_file(f"outputs/{output_folder}/LOGS.txt", "\n".join(LOGS),write_type="wb")
 
 
 if __name__ == "__main__":
@@ -115,4 +106,4 @@ if __name__ == "__main__":
     main()
     end_time = time.perf_counter()
     elapsed_time = end_time - start_time
-    print(f'finished in {elapsed_time:.02f}s')
+    print(f'finished in {elapsed_time:.05f}s')
